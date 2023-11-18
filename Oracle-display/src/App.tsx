@@ -21,14 +21,14 @@ function App() {
         display: "flex",
         width: "100%",
         height: "100%",
-        padding: 64,
+        padding: 10,
         justifyContent: "center",
         alignItems: "center",
       }}
     >
       <div
         style={{
-          padding: 24,
+          padding: 0,
           borderRadius: 8,
           border: "1px solid white",
           display: "flex",
@@ -77,35 +77,51 @@ function App() {
         <div>
           <h3>Price Calculation Method</h3>
           <ul>
-            <li>Estimated Price = Floor Price * (1 + Intercept + sum(Trait Weight))</li>
+            <li><strong>Estimated Price </strong>= Floor Price * (1 + Intercept + sum(Trait Weight))</li>
             In detail:
             <ul>
               <li>Estimated Price = Base Value + sum(Trait Premium) </li>
               <li>Base Value = Floor Price * (1 + Intercept) </li>
-              <li>Trait Premium = Floor Price * Trait Weights </li>
+              <li>Trait Premium = Floor Price * Trait Weight </li>
             </ul>
+            <li><strong>Trait Premium:</strong> Premium value for every trait. Every Trait has the same premium value at the same time. </li>
+            <li><strong>Trait Weights:</strong> Trait premium ratio to floor price </li>
+            <li><strong>Base Value:</strong> Value for a collection (linear to floor price). Floor price can not represent collection base value well
+                 because it doesn't include buyside impacts. Thus, a collection base value is slightly smaller than floor price. </li>
+            <li><strong>Intercept:</strong> Intercept for a collection (linear to floor price). A collection intercept is slightly smaller than 0. </li>
           </ul>
         </div>
         <div>
           <h3>Verification</h3>
           <ul>
             <li>Floor price: {estimating ? "--" : estimate?.floor ?? "--"} </li>
-            {/* <li>Weights: {estimating ? "--" : estimate?.weights ?? "--"} </li> */}
+            <li>Intercept: {estimating ? "--" : estimate?.intercept ?? "--"} </li>
+            <li>Trait Weights:</li>
+            <ul>
+              {estimating
+                ? "--"
+                : Object.entries(estimate?.weights ?? {}).map(([key, value]) => (
+                    <li key={key}>
+                      Trait {key}: {value}
+                    </li>  
+                  )) }
+            </ul>
           </ul>
           calulate the estimated price from floor price and weights, if the result is the same as the estimated price, then the calculation is correct.
-          {/* <br />
+          <br />
           <button onClick={() => {
             if (estimate) {
-              const { floor, weights } = estimate;
-              const [intercept, ...traitWeights] = weights.split(",").map((w) => Number(w));
+              const { floor, intercept, weights } = estimate;
               const baseValue = floor * (1 + intercept);
-              const traitPremium = traitWeights.map((w) => floor * w);
-              const estimatedPrice = baseValue + traitPremium.reduce((a, b) => a + b, 0);
-              alert(`Estimated Price: ${estimatedPrice} ETH`);
+              const traitPremium = Object.entries(weights).reduce((acc, [key, value]) => {
+                return acc + floor * value;
+              }, 0);
+              const expected = baseValue + traitPremium;
+              alert(`Estimated Price: ${expected} ETH`);
+            } else {
+              alert("Please estimate first");
             }
-          }}>
-            Verify
-          </button> */}
+          }}>Verify</button>
         </div>
       </div>
     </div>
@@ -121,7 +137,8 @@ function useTokenPricing() {
   const [estimate, setEstimate] = useState<{
     floor: number;
     estimate: number;
-    weights: Map<string, number>;
+    intercept: number;
+    weights: { [key: string]: number };
   }>();
 
   const contractInstanceRef = useRef<ethers.Contract>();
@@ -149,11 +166,11 @@ function useTokenPricing() {
         }
         setEstimating(false);
         const res = JSON.parse(value);
-        const weights = new Map<string, number>();
-        res.w.forEach((w: number, i: number) => {
-          weights.set(res.t[i], w);
-        });
-        setEstimate({ floor: res.f, estimate: res.p , weights: res.w});
+        // const weights = new Map<string, number>();
+        // res.w.forEach((x: string, i: number) => {
+        //   weights.set(x, i);
+        // });
+        setEstimate({ floor: res.f, estimate: res.p , intercept: res.i, weights: res.w});
       });
       contractInstanceRef.current = contractInstance;
     });
