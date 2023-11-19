@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ethers } from "ethers";
 import "./App.css";
 import { CONTRACT_ABI } from "./abi";
+import image from "../tmp.jpg";
 
 const CONTRACT_ADDRESS = "0x15076ec9faa835ae578d81997c8c44e0ed0d2940";
 const SUBSCRIPTION_ID = 1694;
@@ -19,13 +20,16 @@ function App() {
     <div
       style={{
         display: "flex",
-        width: "100%",
-        height: "100%",
+        width: "100vw",
+        height: "100vh",
         padding: 10,
         justifyContent: "center",
         alignItems: "center",
+        backgroundImage:`url(${image})`,
+        backgroundSize: "cover",
       }}
     >
+      
       <div
         style={{
           padding: 0,
